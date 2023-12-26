@@ -1,0 +1,7 @@
+*sqlite
+*sqlite*
+data
+node_modules
+*.m4a
+*.mp3
+src/test/*
