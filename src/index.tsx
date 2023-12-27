@@ -1,6 +1,5 @@
 import { Hono } from 'hono'
 import { db } from './lib/db'
-// import { compress } from 'hono/compress'
 import { serveStatic } from 'hono/bun'
 
 const Body = () => {
@@ -69,10 +68,7 @@ const SourcesList = () => {
   ) 
 }
 
-// https://twitter.com/i/spaces/1lPKqbPkeLdGb?s=20
 const app = new Hono()
-
-// app.use('*', compress())
 
 app.use('/static/*', serveStatic({ root: './', }))
 app.use('/favicon.ico', serveStatic({ path: './favicon.ico', }))
@@ -122,7 +118,6 @@ app.post('/sources/:id/queue', async (c) => {
   console.log({source})
 
   // Download MP3
-  // "https://twitter.com/i/spaces/1lPKqbPkeLdGb",
   const getTitle = [
     "yt-dlp", source.url,
     "--cookies", "./data/auth/twitter.coookies",
@@ -139,59 +134,16 @@ app.post('/sources/:id/queue', async (c) => {
 // RSS XML
 // Formatted following https://anchor.fm/s/dfac486c/podcast/rss
 import { v5 as uuidv5 } from 'uuid';
-import { rssxmleg } from './test/rss'
+// import { rssxmleg } from './test/rss'
 
-const uuidNamespace = "1d16ed48-6f54-41d3-b40f-862ff0420de2"
+const uuidNamespace = "1d16ed48-6f54-41d3-b40f-862ff0420de2" // random uuid, just need consistent hashing
 const genSeedUUID = (str: string) => uuidv5(str, uuidNamespace)
-const domain = "https://d36fa7f9c45c06f904f5c56144f971f0.serveo.net"
-const rssendpiont = "sources/rss"
+const localdomain = process.env.EXT_HOST
+const domain = process.env.EXT_HOST
+const rssendpiont = "sources/rss2"
 const rsslink = `${domain}/${rssendpiont}`
 
 const genXML = (sources: any) => {
-  
-  // <enclosure url="${details.hostedPath}" length="45819697" type="audio/mpeg"/>
-
-//   const item = (details: any) => `
-// <item>
-//   <title><![CDATA[${details.title}]]></title>
-//   <description><![CDATA[${details.title}]]></description>
-//   <link>${details.url}</link>
-//   <guid isPermaLink="false">${genSeedUUID(details.url)}</guid>
-//   <dc:creator><![CDATA[joe@bios.dev]]></dc:creator>
-//   <pubDate>${details.published}</pubDate>
-//   <enclosure url="${details.hostedPath}" type="audio/mpeg"/>
-//   <itunes:summary>${details.title}</itunes:summary>
-//   <itunes:explicit>Yes</itunes:explicit>
-//   <itunes:duration>01:01:15</itunes:duration>
-//   <itunes:image href="https://picsum.photos/seed/picsum/512/512"/>
-//   <itunes:episodeType>full</itunes:episodeType>
-// </item>`
-
-// const item = (details: any) => `
-// <item>
-// <title><![CDATA[${details.title}]]></title>
-// <description><![CDATA[${details.title}]]></description>
-// <link>${details.url}</link>
-// <guid isPermaLink="false">${genSeedUUID(details.url)}</guid>
-// <dc:creator><![CDATA[joe@bios.dev]]></dc:creator>
-// <pubDate>${details.published}</pubDate>
-// <enclosure url="https://anchor.fm/s/dfac486c/podcast/play/79616118/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2023-11-5%2Faaa2afba-5db7-4359-40c2-77501f55599a.mp3" length="45819697" type="audio/mpeg"/>
-// <itunes:summary>&lt;p&gt;In this candid coaching session, we cover aligning on the mission and purpose behind our podcast, defining milestones to indicate progress, and committing to specific goals to advance the project.&lt;/p&gt;
-// &lt;p&gt;- 00:07:00 Setting the stage, intentions for the coaching session&lt;/p&gt;
-// &lt;p&gt;- 00:14:30 Describing where we are currently at with the podcast&lt;/p&gt;
-// &lt;p&gt;- 00:29:40 Connecting to our &amp;quot;heartbreaking passion&amp;quot; &lt;/p&gt;
-// &lt;p&gt;- 00:34:00 Articulating the mission and purpose &lt;/p&gt;
-// &lt;p&gt;- 00:41:00 Considering business, non-profit or hobby framing&lt;/p&gt;
-// &lt;p&gt;- 00:51:00 Assessing what changes each person can make&lt;/p&gt;
-// &lt;p&gt;- 00:54:15 Establishing a content creation goal&lt;/p&gt;
-// </itunes:summary>
-// <itunes:explicit>Yes</itunes:explicit>
-// <itunes:duration>01:01:15</itunes:duration>
-// <itunes:image href="https://d3t3ozftmdmh3i.cloudfront.net/production/podcast_uploaded_nologo/37426099/37426099-1682080096296-58054cd256d41.jpg"/>
-// <itunes:season>1</itunes:season>
-// <itunes:episode>71</itunes:episode>
-// <itunes:episodeType>full</itunes:episodeType>
-// </item>`
 
   const items = sources.map( (episode: any) => `
     <item>
@@ -208,7 +160,6 @@ const genXML = (sources: any) => {
       <itunes:image href="https://picsum.photos/seed/picsum/512/512"/>
       <itunes:episodeType>full</itunes:episodeType>
     </item>` ).join("\n")
-
 
   const xml = `
 <?xml version="1.0" encoding="UTF-8"?>
@@ -252,12 +203,12 @@ app.get(`/${rssendpiont}`, async (c) => {
   c.header('Access-Control-Allow-Origin', '*')
   
   return c.body(genXML( sources.map( (source: any) => {
-    const hostedPath = encodeURI(source.filepath.replace(process.cwd(), domain))
+    // const hostedPath = encodeURI(source.filepath.replace(process.cwd(), domain))
+    const hostedPath = [localdomain,source.filepath].join("/")
     return { ...source, hostedPath }
   })))
   // return c.body( rssxmleg )
 })
-
 
 // http://localhost:3000/static/LIVE%20ALEX%20JONES,%20MUSK,%20%20TATES,%20GAETZ,%20VIVEK,%20CALACANIS,%20PBD%20%23XTownHall%20%5B1lPKqbPkeLdGb%5D.m4a
 app.get('/sources/:id/download', async (c) => {
@@ -269,5 +220,8 @@ app.get('/sources/:id/download', async (c) => {
 //   return c.body
 // })
 
-export default app
+export default {
+  fetch: app.fetch,
+  hostname: "0.0.0.0",
+}
 

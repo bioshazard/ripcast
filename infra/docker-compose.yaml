@@ -1,0 +1,30 @@
+version: "3.9"
+services:
+
+  # https://blog.theodo.com/2015/04/docker-and-virtualenv-a-clean-way-to-locally-install-python-dependencies-with-pip-in-docker/
+  # docker compose run --rm -it slackbot pip install -r requirements.txt --user --upgrade
+  # docker compose run --rm -it slackbot sed -i "/import tensorflow_text/d" /mnt/vendor/lib/python3.9/site-packages/langchain/embeddings/tensorflow_hub.py
+  queuecast:
+    container_name: queuecast
+    image: oven/bun:1
+    restart: unless-stopped
+    # network_mode: host
+    working_dir: /app
+    command: bun dev
+    volumes:
+      - ../:/app
+    environment:
+      - EXT_HOST
+    ports:
+      - "3080:3000"
+
+  tunnel:
+    container_name: cloudflared-tunnel
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel run
+    environment:
+      # set this in your .env so its not leaked in the repo
+      - TUNNEL_TOKEN
+
+# TODO: terraform the cf tunnel
