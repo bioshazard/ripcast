@@ -1,6 +1,8 @@
 import { Hono } from 'hono'
-import { db } from './lib/db'
+import { logger } from 'hono/logger'
 import { serveStatic } from 'hono/bun'
+import { db } from './lib/db'
+
 
 const Body = () => {
   return (
@@ -69,7 +71,7 @@ const SourcesList = () => {
 }
 
 const app = new Hono()
-
+app.use('*', logger())
 app.use('/static/*', serveStatic({ root: './', }))
 app.use('/favicon.ico', serveStatic({ path: './favicon.ico', }))
 
@@ -140,7 +142,7 @@ const uuidNamespace = "1d16ed48-6f54-41d3-b40f-862ff0420de2" // random uuid, jus
 const genSeedUUID = (str: string) => uuidv5(str, uuidNamespace)
 const localdomain = process.env.EXT_HOST
 const domain = process.env.EXT_HOST
-const rssendpiont = "sources/rss2"
+const rssendpiont = "sources/rss"
 const rsslink = `${domain}/${rssendpiont}`
 
 const genXML = (sources: any) => {
@@ -197,7 +199,8 @@ ${items}
   return xml.trim()
 }
 app.get(`/${rssendpiont}`, async (c) => {
-  console.log("HIT!")
+  // console.log("HIT!")
+  // console.log({req: c.req})
   const sources = db.query("SELECT rowid, * FROM sources").all()
   c.header('Content-Type', 'application/rss+xml; charset=utf-8')
   c.header('Access-Control-Allow-Origin', '*')
